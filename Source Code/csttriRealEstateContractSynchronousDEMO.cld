@@ -1,7 +1,7 @@
 /*
  *  Generated from System: "cst-triRealEstateContract - Synchronous - DEMO"
- *  Workflow Version: 1
- *  Workflow Status: "Published"
+ *  Workflow Version: 0
+ *  Workflow Status: "Retired"
  * 
  *  Generator Version: 1
  */
@@ -33,10 +33,6 @@ CallWorkflow (triContract.triRealEstateContract, "cstRealEstateContract - Synchr
     mbo(triContract.triRealEstateContract);
     records(GetTempTriRealEstateContract.record)
 ]
-
-If (GetTempTriRealEstateContract.ResultCount != ""  )  {
-    Stop
-}
 
 If (GetTempTriRealEstateContract.record.RecordInformation.cstEntityCodeTX == ""  )  {
 
