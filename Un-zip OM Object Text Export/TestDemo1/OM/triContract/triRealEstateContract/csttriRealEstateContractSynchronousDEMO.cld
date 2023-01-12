@@ -1,0 +1,1090 @@
+/*
+ *  Generated from Object Migration file: cst-triRealEstateContract - Synchronous - DEMO.xml
+ * 
+ *  Generator Version: 1
+ */
+
+Start ( ) 
+[
+    mbo(triContract.triRealEstateContract);
+    name("cst-triRealEstateContract - Synchronous - DEMO");
+    sync(temporary);
+    propagateIntegrationStatus
+]
+
+/**
+ * Get the Temporary Real Estate Contract Record
+ * 
+ * @label Get Temp triRealEstateContract
+ */
+GetTempRecord GetTempTriRealEstateContract
+[
+    mbo(triContract.triRealEstateContract);
+    target(Start.record)
+]
+
+/**
+ * @label Validate Holdover Flag value
+ */
+CallWorkflow (triContract.triRealEstateContract, "cstRealEstateContract - Synchronous - Onchange - Validation for Holdover value")
+[
+    mbo(triContract.triRealEstateContract);
+    records(GetTempTriRealEstateContract.record)
+]
+
+If (GetTempTriRealEstateContract.ResultCount != ""  )  {
+    Stop
+}
+
+If (GetTempTriRealEstateContract.record.RecordInformation.cstEntityCodeTX == ""  )  {
+
+    /**
+     * @label Call Map Lease ID
+     */
+    CallWorkflow CallMapLeaseID (triContract.triRealEstateContract, "cstRealEstateContract - Synchronous - Onchange - Map Lease ID")
+    [
+        mbo(triContract.triRealEstateContract);
+        records(Start.record)
+    ]
+
+    If (CallMapLeaseID.Success != "SUCCESS"  )  {
+        Stop
+    }
+}
+
+/**
+ * @label Call Update Property Lease Name workflow
+ */
+CallWorkflow CallUpdatePropertyLeaseNameWorkflow (triContract.triRealEstateContract, "cstRealEstateContract - Synchronous - Update Property Lease Name")
+[
+    mbo(triContract.triRealEstateContract);
+    records(Start.record)
+]
+
+If (CallUpdatePropertyLeaseNameWorkflow.Success != "SUCCESS"  )  {
+    Stop
+}
+
+/**
+ * @label Map Active Start and End Dates
+ */
+ModifyRecords
+[
+    mbo(triContract.triRealEstateContract);
+    formulaRecalc(disable);
+    source(GetTempTriRealEstateContract.record);
+    target(GetTempTriRealEstateContract.record);
+    transaction(none);
+    map(toField(General.RecordInformation.triUserMessageTX, ""));
+    map(toField(General.RecordInformation.triUserMessageFlagTX, ""));
+    map(toField(General.RecordInformation."Active Start Date", General.RecordInformation.triStartDA));
+    map(toField(General.RecordInformation."Active End Date", General.RecordInformation.triExpirationDA))
+]
+
+If (GetTempTriRealEstateContract.record.RecordInformation.triStartDA > GetTempTriRealEstateContract.record.RecordInformation.triExpirationDA && GetTempTriRealEstateContract.record.RecordInformation.triExpirationDA != ""  )  {
+
+    /**
+     * @label Create triUserMessageHelper - Date Validation
+     */
+    CreateRecord CreateTriUserMessageHelperDateValidation
+    [
+        mbo(triHelper.triUserMessageHelper);
+        formulaRecalc(disable);
+        form(triHelper.triUserMessageHelper);
+        action(triCalculate);
+        initializeFrom(GetTempTriRealEstateContract.record);
+        transaction(none);
+        useSourceProject;
+        map(toField(General.triIdTX, "triWarranty001"));
+        map(toField(General.triLanguageLI, General.RecordInformation.triLanguageLI));
+        map(toField(General.triInput2TX, General.RecordInformation.triExpirationDA));
+        map(toField(General.triInput1TX, General.RecordInformation.triStartDA))
+    ]
+
+    /**
+     * @label Update triRealEstateCotract
+     */
+    ModifyRecords
+    [
+        mbo(triContract.triRealEstateContract);
+        formulaRecalc(disable);
+        source(CreateTriUserMessageHelperDateValidation.record);
+        target(GetTempTriRealEstateContract.record);
+        transaction(none);
+        map(toField(General.RecordInformation.triUserMessageTX, General.triUserMessageTX));
+        map(toField(General.RecordInformation.triUserMessageFlagTX, General.triUserMessageFlagTX))
+    ]
+
+    /**
+     * @label Show User Message
+     */
+    ModifyForm
+    [
+        mbo(triContract.triRealEstateContract);
+        form("Current");
+        target(GetTempTriRealEstateContract.record);
+        GUI(triRealEstateLease);
+        GUIMap(triAccounting.triUserMessage."Show Title Bar", true);
+        GUIMap(triAccounting.triUserMessage.Visible, true);
+        GUIMap(triAccounting.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triCalendarDetails.triUserMessage."Show Title Bar", true);
+        GUIMap(triCalendarDetails.triUserMessage.Visible, true);
+        GUIMap(triCalendarDetails.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triClientAttributes.triUserMessage."Show Title Bar", true);
+        GUIMap(triClientAttributes.triUserMessage.Visible, true);
+        GUIMap(triClientAttributes.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triContactDetails.triUserMessage."Show Title Bar", true);
+        GUIMap(triContactDetails.triUserMessage.Visible, true);
+        GUIMap(triContactDetails.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triDistribution.triUserMessage."Show Title Bar", true);
+        GUIMap(triDistribution.triUserMessage.Visible, true);
+        GUIMap(triDistribution.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triGeneral.triUserMessage."Show Title Bar", true);
+        GUIMap(triGeneral.triUserMessage.Visible, true);
+        GUIMap(triGeneral.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triHistory.triUserMessage."Show Title Bar", true);
+        GUIMap(triHistory.triUserMessage.Visible, true);
+        GUIMap(triHistory.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triLocations.triUserMessage."Show Title Bar", true);
+        GUIMap(triLocations.triUserMessage.Visible, true);
+        GUIMap(triLocations.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triPayments.triUserMessage."Show Title Bar", true);
+        GUIMap(triPayments.triUserMessage.Visible, true);
+        GUIMap(triPayments.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triRPIM.triUserMessage."Show Title Bar", true);
+        GUIMap(triRPIM.triUserMessage.Visible, true);
+        GUIMap(triRPIM.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triRealEstateLease."Close Window", false);
+        GUIMap(triReference.triUserMessage."Show Title Bar", true);
+        GUIMap(triReference.triUserMessage.Visible, true);
+        GUIMap(triReference.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triService.triUserMessage."Show Title Bar", true);
+        GUIMap(triService.triUserMessage.Visible, true);
+        GUIMap(triService.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triSpaceUseAgreement.triUserMessage."Show Title Bar", true);
+        GUIMap(triSpaceUseAgreement.triUserMessage.Visible, true);
+        GUIMap(triSpaceUseAgreement.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triSummary.triUserMessage."Show Title Bar", true);
+        GUIMap(triSummary.triUserMessage.Visible, true);
+        GUIMap(triSummary.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triSystem.triUserMessage."Show Title Bar", true);
+        GUIMap(triSystem.triUserMessage.Visible, true);
+        GUIMap(triSystem.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triTerms.triUserMessage."Show Title Bar", true);
+        GUIMap(triTerms.triUserMessage.Visible, true)
+    ]
+
+    /**
+     * @label Remove triUserMessageHelper - Date Validation
+     */
+    TriggerAction
+    [
+        mbo(triHelper.triUserMessageHelper);
+        formulaRecalc(disable);
+        action("triRemove");
+        target(CreateTriUserMessageHelperDateValidation.record);
+        triggerActionWhen(immediately)
+    ]
+    Stop
+}
+
+/**
+ * @label VARContractAttribute
+ */
+Variable VARContractAttribute
+[
+    mbo(triIntermediate.triContractAttribute);
+    value(clear)
+]
+
+/**
+ * @label Call Get Contract Attribute
+ */
+CallWorkflow (triContract, "triContract - Synchronous - Get Contract Attribute")
+[
+    mbo(triContract.triRealEstateContract);
+    records(GetTempTriRealEstateContract.record);
+    parameter(return, "RTNContractAttribute", VARContractAttribute)
+]
+
+If (VARContractAttribute.record.General.triCalculateNPVBL == "TRUE"  )  {
+
+    /**
+     * @label Call User Message - Recalculate NPV
+     */
+    CallWorkflow (triContract, "triContract - Synchronous - User Message - Recalculate NPV")
+    [
+        mbo(triContract.triRealEstateContract);
+        records(GetTempTriRealEstateContract.record)
+    ]
+}
+
+If (GetTempTriRealEstateContract.record.RecordInformation.triUsingRPIMBL == "TRUE"  )  {
+
+    If (GetTempTriRealEstateContract.record.RecordInformation.triFormNameSY == "triRealEstateLease" && GetTempTriRealEstateContract.record.RecordInformation.triUserMessageTX == "" )  {
+
+        /**
+         * @label Call triRealEstateContract - RPIM Validation
+         */
+        CallWorkflow (triContract.triRealEstateContract, "triRealEstateContract - Synchronous - RPIM Validation")
+        [
+            mbo(triContract.triRealEstateContract);
+            records(GetTempTriRealEstateContract.record)
+        ]
+
+        If (GetTempTriRealEstateContract.record.RecordInformation.triUserMessageTX == ""  )  {
+        }
+        Else  {
+
+            /**
+             * @label Show RPIM User Message
+             */
+            ModifyForm
+            [
+                mbo(triContract.triRealEstateContract);
+                form("Current");
+                target(GetTempTriRealEstateContract.record);
+                GUI(triRealEstateLease);
+                GUIMap(triAccounting.triUserMessage.Visible, true);
+                GUIMap(triCalendarDetails.triUserMessage.Visible, true);
+                GUIMap(triClientAttributes.triUserMessage.Visible, true);
+                GUIMap(triContactDetails.triUserMessage.Visible, true);
+                GUIMap(triDistribution.triUserMessage.Visible, true);
+                GUIMap(triGeneral.triUserMessage.Visible, true);
+                GUIMap(triHistory.triUserMessage.Visible, true);
+                GUIMap(triLocations.triUserMessage.Visible, true);
+                GUIMap(triPayments.triUserMessage.Visible, true);
+                GUIMap(triRPIM.triUserMessage.Visible, true);
+                GUIMap(triRealEstateLease."Close Window", false);
+                GUIMap(triReference.triUserMessage.Visible, true);
+                GUIMap(triService.triUserMessage.Visible, true);
+                GUIMap(triSpaceUseAgreement.triUserMessage.Visible, true);
+                GUIMap(triSummary.triUserMessage.Visible, true);
+                GUIMap(triSystem.triUserMessage.Visible, true);
+                GUIMap(triTerms.triUserMessage.Visible, true)
+            ]
+            Stop
+        }
+    }
+
+    If (GetTempTriRealEstateContract.record.RecordInformation.triFormNameSY == "triOwnedProperty" && GetTempTriRealEstateContract.record.RecordInformation.triUserMessageTX == "" )  {
+
+        /**
+         * @label Call triOwnedProperty - RPIM Validation
+         */
+        CallWorkflow (triContract.triRealEstateContract, "triOwnedProperty - Synchronous - RPIM Validation")
+        [
+            mbo(triContract.triRealEstateContract);
+            records(GetTempTriRealEstateContract.record)
+        ]
+
+        If (GetTempTriRealEstateContract.record.RecordInformation.triUserMessageTX == ""  )  {
+        }
+        Else  {
+
+            /**
+             * @label Show RPIM User Message
+             */
+            ModifyForm
+            [
+                mbo(triContract.triRealEstateContract);
+                form("Current");
+                target(GetTempTriRealEstateContract.record);
+                GUI(triRealEstateLease);
+                GUIMap(triAccounting.triUserMessage."Show Title Bar", true);
+                GUIMap(triAccounting.triUserMessage.Visible, true);
+                GUIMap(triAccounting.triUserMessage.triUserMessageTX.Visible, true);
+                GUIMap(triCalendarDetails.triUserMessage."Show Title Bar", true);
+                GUIMap(triCalendarDetails.triUserMessage.Visible, true);
+                GUIMap(triCalendarDetails.triUserMessage.triUserMessageTX.Visible, true);
+                GUIMap(triClientAttributes.triUserMessage."Show Title Bar", true);
+                GUIMap(triClientAttributes.triUserMessage.Visible, true);
+                GUIMap(triClientAttributes.triUserMessage.triUserMessageTX.Visible, true);
+                GUIMap(triContactDetails.triUserMessage."Show Title Bar", true);
+                GUIMap(triContactDetails.triUserMessage.Visible, true);
+                GUIMap(triContactDetails.triUserMessage.triUserMessageTX.Visible, true);
+                GUIMap(triDistribution.triUserMessage."Show Title Bar", true);
+                GUIMap(triDistribution.triUserMessage.Visible, true);
+                GUIMap(triDistribution.triUserMessage.triUserMessageTX.Visible, true);
+                GUIMap(triGeneral.triUserMessage."Show Title Bar", true);
+                GUIMap(triGeneral.triUserMessage.Visible, true);
+                GUIMap(triGeneral.triUserMessage.triUserMessageTX.Visible, true);
+                GUIMap(triHistory.triUserMessage."Show Title Bar", true);
+                GUIMap(triHistory.triUserMessage.Visible, true);
+                GUIMap(triHistory.triUserMessage.triUserMessageTX.Visible, true);
+                GUIMap(triLocations.triUserMessage."Show Title Bar", true);
+                GUIMap(triLocations.triUserMessage.Visible, true);
+                GUIMap(triLocations.triUserMessage.triUserMessageTX.Visible, true);
+                GUIMap(triPayments.triUserMessage."Show Title Bar", true);
+                GUIMap(triPayments.triUserMessage.Visible, true);
+                GUIMap(triPayments.triUserMessage.triUserMessageTX.Visible, true);
+                GUIMap(triRPIM.triUserMessage."Show Title Bar", true);
+                GUIMap(triRPIM.triUserMessage.Visible, true);
+                GUIMap(triRPIM.triUserMessage.triUserMessageTX.Visible, true);
+                GUIMap(triRealEstateLease."Close Window", false);
+                GUIMap(triReference.triUserMessage."Show Title Bar", true);
+                GUIMap(triReference.triUserMessage.Visible, true);
+                GUIMap(triReference.triUserMessage.triUserMessageTX.Visible, true);
+                GUIMap(triService.triUserMessage."Show Title Bar", true);
+                GUIMap(triService.triUserMessage.Visible, true);
+                GUIMap(triService.triUserMessage.triUserMessageTX.Visible, true);
+                GUIMap(triSpaceUseAgreement.triUserMessage."Show Title Bar", true);
+                GUIMap(triSpaceUseAgreement.triUserMessage.Visible, true);
+                GUIMap(triSpaceUseAgreement.triUserMessage.triUserMessageTX.Visible, true);
+                GUIMap(triSummary.triUserMessage."Show Title Bar", true);
+                GUIMap(triSummary.triUserMessage.Visible, true);
+                GUIMap(triSummary.triUserMessage.triUserMessageTX.Visible, true);
+                GUIMap(triSystem.triUserMessage."Show Title Bar", true);
+                GUIMap(triSystem.triUserMessage.Visible, true);
+                GUIMap(triSystem.triUserMessage.triUserMessageTX.Visible, true);
+                GUIMap(triTerms.triUserMessage."Show Title Bar", true);
+                GUIMap(triTerms.triUserMessage.Visible, true);
+                GUIMap(triTerms.triUserMessage.triUserMessageTX.Visible, true)
+            ]
+            Stop
+        }
+    }
+}
+
+If (GetTempTriRealEstateContract.record.RecordInformation.triDayOneLossNU > 0  )  {
+
+    /**
+     * @label Call User Message - Disposal Liability Carryover
+     */
+    CallWorkflow (triContract, "triContract - Synchronous - User Message - Disposal Liability Carryover")
+    [
+        mbo(triContract.triRealEstateContract);
+        records(Start.record)
+    ]
+}
+
+If (GetTempTriRealEstateContract.record.RecordInformation.triUserMessageTX != ""  )  {
+
+    /**
+     * @label Show User Message
+     */
+    ModifyForm
+    [
+        mbo(triContract.triRealEstateContract);
+        form("Current");
+        target(GetTempTriRealEstateContract.record);
+        GUI(triRealEstateLease);
+        GUIMap(triAccounting.triUserMessage."Show Title Bar", true);
+        GUIMap(triAccounting.triUserMessage.Visible, true);
+        GUIMap(triAccounting.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triCalendarDetails.triUserMessage."Show Title Bar", true);
+        GUIMap(triCalendarDetails.triUserMessage.Visible, true);
+        GUIMap(triCalendarDetails.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triClientAttributes.triUserMessage."Show Title Bar", true);
+        GUIMap(triClientAttributes.triUserMessage.Visible, true);
+        GUIMap(triClientAttributes.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triContactDetails.triUserMessage."Show Title Bar", true);
+        GUIMap(triContactDetails.triUserMessage.Visible, true);
+        GUIMap(triContactDetails.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triDistribution.triUserMessage."Show Title Bar", true);
+        GUIMap(triDistribution.triUserMessage.Visible, true);
+        GUIMap(triDistribution.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triGeneral.triUserMessage."Show Title Bar", true);
+        GUIMap(triGeneral.triUserMessage.Visible, true);
+        GUIMap(triGeneral.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triHistory.triUserMessage."Show Title Bar", true);
+        GUIMap(triHistory.triUserMessage.Visible, true);
+        GUIMap(triHistory.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triLocations.triUserMessage."Show Title Bar", true);
+        GUIMap(triLocations.triUserMessage.Visible, true);
+        GUIMap(triLocations.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triPayments.triUserMessage."Show Title Bar", true);
+        GUIMap(triPayments.triUserMessage.Visible, true);
+        GUIMap(triPayments.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triRPIM.triUserMessage."Show Title Bar", true);
+        GUIMap(triRPIM.triUserMessage.Visible, true);
+        GUIMap(triRPIM.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triReference.triUserMessage."Show Title Bar", true);
+        GUIMap(triReference.triUserMessage.Visible, true);
+        GUIMap(triReference.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triService.triUserMessage."Show Title Bar", true);
+        GUIMap(triService.triUserMessage.Visible, true);
+        GUIMap(triService.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triSpaceUseAgreement.triUserMessage."Show Title Bar", true);
+        GUIMap(triSpaceUseAgreement.triUserMessage.Visible, true);
+        GUIMap(triSpaceUseAgreement.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triSummary.triUserMessage."Show Title Bar", true);
+        GUIMap(triSummary.triUserMessage.Visible, true);
+        GUIMap(triSummary.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triSystem.triUserMessage."Show Title Bar", true);
+        GUIMap(triSystem.triUserMessage.Visible, true);
+        GUIMap(triSystem.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triTerms.triUserMessage."Show Title Bar", true);
+        GUIMap(triTerms.triUserMessage.Visible, true);
+        GUIMap(triTerms.triUserMessage.triUserMessageTX.Visible, true)
+    ]
+
+    If (startsWith (GetTempTriRealEstateContract.record.RecordInformation.triUserMessageTX , "RPIM WARNING" )  )  {
+    }
+    Else  {
+        Stop
+    }
+}
+Else  {
+
+    /**
+     * @label Hide User Message
+     */
+    ModifyForm
+    [
+        mbo(triContract.triRealEstateContract);
+        form("Current");
+        target(GetTempTriRealEstateContract.record);
+        GUI(triRealEstateLease);
+        GUIMap(triAccounting.triUserMessage.Visible, false);
+        GUIMap(triCalendarDetails.triUserMessage.Visible, false);
+        GUIMap(triClientAttributes.triUserMessage.Visible, false);
+        GUIMap(triContactDetails.triUserMessage.Visible, false);
+        GUIMap(triDistribution.triUserMessage.Visible, false);
+        GUIMap(triGeneral.triUserMessage.Visible, false);
+        GUIMap(triHistory.triUserMessage.Visible, false);
+        GUIMap(triLocations.triUserMessage.Visible, false);
+        GUIMap(triPayments.triAccountingSummary.triBypassDateGapBL.Visible, false);
+        GUIMap(triPayments.triUserMessage.Visible, false);
+        GUIMap(triRPIM.triUserMessage.Visible, false);
+        GUIMap(triReference.triUserMessage.Visible, false);
+        GUIMap(triService.triUserMessage.Visible, false);
+        GUIMap(triSpaceUseAgreement.triUserMessage.Visible, false);
+        GUIMap(triSummary.triUserMessage.Visible, false);
+        GUIMap(triSystem.triUserMessage.Visible, false);
+        GUIMap(triTerms.triUserMessage.Visible, false)
+    ]
+}
+
+If (( Start.record.RecordInformation.triConversionGroupLI != GetTempTriRealEstateContract.record.RecordInformation.triConversionGroupLI || Start.record.RecordInformation.triExchangeDT != GetTempTriRealEstateContract.record.RecordInformation.triExchangeDT ) )  {
+
+    /**
+     * @label Get Unscheduled triPaymentSchedule from triRealEstateContract 
+     */
+    RetrieveRecords GetUnscheduledTriPaymentScheduleFromTriRealEstateContract
+    [
+        mbo(triPayment.triPaymentSchedule);
+        from(GetTempTriRealEstateContract.record, useAssociation("Has Payment Schedule", triPayment.triPaymentSchedule));
+        filterRecords(Start.record);
+        filter(withField(RecordInfo.triStatusCL == "Active"))
+    ]
+
+    /**
+     * @label Update triPaymentSchedule from triRealEstateContract
+     */
+    ModifyRecords
+    [
+        mbo(triPayment.triPaymentSchedule);
+        formulaRecalc(disable);
+        source(GetTempTriRealEstateContract.record);
+        target(GetUnscheduledTriPaymentScheduleFromTriRealEstateContract.record);
+        transaction(none);
+        map(toField(General.RecordInfo.triExchangeDT, General.RecordInformation.triExchangeDT));
+        map(toField(General.RecordInfo.triConversionGroupLI, General.RecordInformation.triConversionGroupLI))
+    ]
+}
+
+/**
+ * @label Get triStatus [Current Status] Association
+ */
+RetrieveRecords GetTriStatusCurrentStatusAssociation
+[
+    mbo(Classification.triStatus);
+    from(GetTempTriRealEstateContract.record, useAssociation("Current Status", Classification.triStatus))
+]
+
+If (Start.record.RecordInformation.triAreaUO == GetTempTriRealEstateContract.record.RecordInformation.triAreaUO && Start.record.RecordInformation.triCurrencyUO == GetTempTriRealEstateContract.record.RecordInformation.triCurrencyUO )  {
+}
+Else  {
+
+    /**
+     * @label Call Update Dependent Currencies
+     */
+    CallWorkflow (triContract.triRealEstateContract, "triRealEstateContract - Synchronous - Update Dependent Currencies")
+    [
+        mbo(triContract.triRealEstateContract);
+        records(GetTempTriRealEstateContract.record)
+    ]
+}
+
+/**
+ * @label Call Module Level Business Rules
+ */
+CallWorkflow (triContract, "triContract - Synchronous - Module level business rules")
+[
+    mbo(triContract.triRealEstateContract);
+    records(GetTempTriRealEstateContract.record)
+]
+
+/**
+ * @label Call Fixed Cost Allocation validation
+ */
+CallWorkflow (triContract.triRealEstateContract, "triRealEstateContract - Synchronous - Fixed Cost Allocation Validation")
+[
+    mbo(triContract.triRealEstateContract);
+    records(GetTempTriRealEstateContract.record)
+]
+
+If (Contains (Start.record.RecordInformation.triStatusCL , "Draft" )  )  {
+
+    /**
+     * @label Retrieve RE Contract Location record Records
+     */
+    RetrieveRecords RetrieveREContractLocationRecordRecords
+    [
+        mbo(triIntermediate.triREContractLocations);
+        from(GetTempTriRealEstateContract.record, useAssociation("Has Location Area", triIntermediate.triREContractLocations))
+    ]
+
+    /**
+     * @label Update Original Rentable area
+     */
+    ModifyRecords
+    [
+        mbo(triContract.triRealEstateContract);
+        formulaRecalc(disable);
+        source(RetrieveREContractLocationRecordRecords.record);
+        target(GetTempTriRealEstateContract.record);
+        transaction(none);
+        map(toField(General.RecordInformation.cstOriginalRentableNU, General.triLeaseRentableAreaNU))
+    ]
+}
+
+If (GetTempTriRealEstateContract.record.RecordInformation.triUserMessageTX == ""  )  {
+
+    /**
+     * @label Call triRealEstateContract -Clear and Hide User Message
+     */
+    CallWorkflow (triContract.triRealEstateContract, "triRealEstateContract - Synchronous - User Message - Clear and Hide")
+    [
+        mbo(triContract.triRealEstateContract);
+        records(GetTempTriRealEstateContract.record)
+    ]
+
+    /**
+     * @label Get Existing triRETransactionTerms
+     */
+    RetrieveRecords GetExistingTriRETransactionTerms
+    [
+        mbo(triRETransaction.triRETransactionTerms);
+        from(GetTempTriRealEstateContract.record, useAssociation("Has Terms", triRETransaction.triRETransactionTerms))
+    ]
+
+    If (GetExistingTriRETransactionTerms.ResultCount < 1 && GetTriStatusCurrentStatusAssociation.ResultCount > 0 )  {
+
+        /**
+         * @label Create trRETransactionTerms
+         */
+        CreateRecord CreateTrRETransactionTerms
+        [
+            mbo(triRETransaction.triRETransactionTerms);
+            formulaRecalc(disable);
+            form(triRETransaction.triRETransactionLeaseTerms);
+            action(triCreate);
+            initializeFrom(Start.record);
+            transaction(none);
+            useSourceProject;
+            associateSourceUsing("Lease Terms For")
+        ]
+
+        /**
+         * @label Call Terms Precreate
+         */
+        CallWorkflow (triRETransaction.triRETransactionTerms, "triRETransactionTerm - Synchronous - Terms Precreate")
+        [
+            mbo(triRETransaction.triRETransactionTerms);
+            records(CreateTrRETransactionTerms.record)
+        ]
+
+        /**
+         * @label Call Make Previous Revision History
+         */
+        CallWorkflow (triRETransaction.triRETransactionTerms, "triRETransactionTerms - Synchronous - triCreate - Make Previous Revision History")
+        [
+            mbo(triRETransaction.triRETransactionTerms);
+            records(CreateTrRETransactionTerms.record)
+        ]
+
+        /**
+         * @label Call Assocate RE Terms with RE Lease
+         */
+        CallWorkflow (triContract.triRealEstateContract, "triRealEstateContract - Synchronous - Associate Re Terms with RE Lease")
+        [
+            mbo(triContract.triRealEstateContract);
+            records(GetTempTriRealEstateContract.record)
+        ]
+    }
+}
+Else  {
+
+    /**
+     * @label Call triRealEstateContract - Show User Message
+     */
+    CallWorkflow (triContract.triRealEstateContract, "cst-triRealEstateContract - Synchronous - User Message - Show")
+    [
+        mbo(triContract.triRealEstateContract);
+        records(GetTempTriRealEstateContract.record)
+    ]
+
+    /**
+     * @label Show Attention Message
+     */
+    ModifyForm
+    [
+        mbo(triContract.triRealEstateContract);
+        form("Current");
+        target(GetTempTriRealEstateContract.record);
+        GUI(triRealEstateLease);
+        GUIMap(triAccounting.triUserMessage."Show Title Bar", true);
+        GUIMap(triAccounting.triUserMessage.Visible, true);
+        GUIMap(triAccounting.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triCalendarDetails.triUserMessage."Show Title Bar", true);
+        GUIMap(triCalendarDetails.triUserMessage.Visible, true);
+        GUIMap(triCalendarDetails.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triClientAttributes.triUserMessage."Show Title Bar", true);
+        GUIMap(triClientAttributes.triUserMessage.Visible, true);
+        GUIMap(triClientAttributes.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triContactDetails.triUserMessage."Show Title Bar", true);
+        GUIMap(triContactDetails.triUserMessage.Visible, true);
+        GUIMap(triContactDetails.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triDistribution.triUserMessage."Show Title Bar", true);
+        GUIMap(triDistribution.triUserMessage.Visible, true);
+        GUIMap(triDistribution.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triGeneral.triUserMessage."Show Title Bar", true);
+        GUIMap(triGeneral.triUserMessage.Visible, true);
+        GUIMap(triGeneral.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triHistory.triUserMessage."Show Title Bar", true);
+        GUIMap(triHistory.triUserMessage.Visible, true);
+        GUIMap(triHistory.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triLocations.triUserMessage."Show Title Bar", true);
+        GUIMap(triLocations.triUserMessage.Visible, true);
+        GUIMap(triLocations.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triPayments.triUserMessage."Show Title Bar", true);
+        GUIMap(triPayments.triUserMessage.Visible, true);
+        GUIMap(triPayments.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triRPIM.triUserMessage."Show Title Bar", true);
+        GUIMap(triRPIM.triUserMessage.Visible, true);
+        GUIMap(triRPIM.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triReference.triUserMessage."Show Title Bar", true);
+        GUIMap(triReference.triUserMessage.Visible, true);
+        GUIMap(triReference.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triService.triUserMessage."Show Title Bar", true);
+        GUIMap(triService.triUserMessage.Visible, true);
+        GUIMap(triService.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triSpaceUseAgreement.triUserMessage."Show Title Bar", true);
+        GUIMap(triSpaceUseAgreement.triUserMessage.Visible, true);
+        GUIMap(triSpaceUseAgreement.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triSummary.triUserMessage."Show Title Bar", true);
+        GUIMap(triSummary.triUserMessage.Visible, true);
+        GUIMap(triSummary.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triSystem.triUserMessage."Show Title Bar", true);
+        GUIMap(triSystem.triUserMessage.Visible, true);
+        GUIMap(triSystem.triUserMessage.triUserMessageTX.Visible, true);
+        GUIMap(triTerms.triUserMessage."Show Title Bar", true);
+        GUIMap(triTerms.triUserMessage.Visible, true);
+        GUIMap(triTerms.triUserMessage.triUserMessageTX.Visible, true)
+    ]
+}
+
+If (GetTempTriRealEstateContract.record.RecordInformation.triAccountingStartDateDA == "" )  {
+
+    /**
+     * Update Accounting Start Date with Commencement Date 
+     * 
+     * @label Update triAccountingStartDateDA
+     */
+    ModifyRecords
+    [
+        mbo(triContract.triRealEstateContract);
+        formulaRecalc(disable);
+        source(GetTempTriRealEstateContract.record);
+        target(GetTempTriRealEstateContract.record);
+        transaction(none);
+        map(toField(General.RecordInformation.triAccountingStartDateDA, General.RecordInformation.triStartDA))
+    ]
+}
+
+If (GetTempTriRealEstateContract.record.RecordInformation.triAccountingEndDateDA == "" )  {
+
+    /**
+     * Update Accouting End Date with Expiration Date
+     * 
+     * @label Update triAccountingEndDateDA
+     */
+    ModifyRecords
+    [
+        mbo(triContract.triRealEstateContract);
+        formulaRecalc(disable);
+        source(GetTempTriRealEstateContract.record);
+        target(GetTempTriRealEstateContract.record);
+        transaction(none);
+        map(toField(General.RecordInformation.triAccountingEndDateDA, General.RecordInformation.triExpirationDA))
+    ]
+}
+Else  {
+
+    If (GetTempTriRealEstateContract.record.RecordInformation.triAccountingEndDateDA > GetTempTriRealEstateContract.record.RecordInformation.triLikelyTermEndDA  )  {
+
+        /**
+         * @label Update Likely Term End Date
+         */
+        ModifyRecords
+        [
+            mbo(triContract.triRealEstateContract);
+            formulaRecalc(disable);
+            source(GetTempTriRealEstateContract.record);
+            target(GetTempTriRealEstateContract.record);
+            transaction(none);
+            map(toField(General.RecordInformation.triLikelyTermEndDA, General.RecordInformation.triAccountingEndDateDA))
+        ]
+    }
+}
+
+If (GetTempTriRealEstateContract.record.RecordInformation.triFormNameSY == "triOwnedProperty" )  {
+
+    /**
+     * set the triStartDA field equal to triPurchaseDA.  The triStartDA field needs to be populated in order for the "Total Spend (Estimated)" field formula to work.
+     * 
+     * @label Update triRealEstateContract - Set triStartDA
+     */
+    ModifyRecords
+    [
+        mbo(triContract.triRealEstateContract);
+        formulaRecalc(disable);
+        source(GetTempTriRealEstateContract.record);
+        target(GetTempTriRealEstateContract.record);
+        transaction(none);
+        map(toField(General.RecordInformation.triStartDA, General.RecordInformation.triPurchaseDA))
+    ]
+}
+
+/**
+ * @label Get Contract Notification associated to Lease
+ */
+RetrieveRecords GetContractNotificationAssociatedToLease
+[
+    mbo(triNotificationAction.triContractNotification);
+    from(Start.record, useAssociation("Has Contract Notification", triNotificationAction.triContractNotification))
+]
+
+If (GetContractNotificationAssociatedToLease.ResultCount > 0 )  {
+
+    /**
+     * @label Update Contract Section on Contract Notification with Lease
+     */
+    ModifyRecords
+    [
+        mbo(triNotificationAction.triContractNotification);
+        formulaRecalc(disable);
+        source(Start.record);
+        target(GetContractNotificationAssociatedToLease.record);
+        transaction(none);
+        map(toSection(General.triContract, triContract.triRealEstateContract));
+        map(toSection(General.triContractRealEstateLease, triContract.triRealEstateContract))
+    ]
+}
+
+/**
+ * @label Get Clause where IndexAdjustmentBL is TRUE
+ */
+RetrieveRecords GetClauseWhereIndexAdjustmentBLIsTRUE
+[
+    mbo(triItem.triLeaseClause);
+    from(Start.record, useAssociation("Has Clause", triItem.triLeaseClause));
+    filterRecords(Start.record);
+    filter(withField(General.triIndexAdjustmentBL == "TRUE"))
+]
+
+If (GetClauseWhereIndexAdjustmentBLIsTRUE.ResultCount > 0 )  {
+
+    /**
+     * triIncludesIndexClauseBL present in system tab
+     * 
+     * @label Set triIncludesIndexClauseBL to TRUE
+     */
+    ModifyRecords
+    [
+        mbo(triContract.triRealEstateContract);
+        formulaRecalc(disable);
+        source(Start.record);
+        target(GetTempTriRealEstateContract.record);
+        transaction(none);
+        map(toField(General.RecordInformation.triIncludesIndexClauseBL, "TRUE"))
+    ]
+
+    /**
+     * @label Call Workflow OnChange Includes Index Clause
+     */
+    CallWorkflow (triContract, "triContract - Synchronous - OnChange Includes Index Clause")
+    [
+        mbo(triContract.triRealEstateContract);
+        records(Start.record)
+    ]
+}
+Else  {
+
+    /**
+     * @label Set triIncludesIndexClauseBL to FALSE
+     */
+    ModifyRecords
+    [
+        mbo(triContract.triRealEstateContract);
+        formulaRecalc(disable);
+        source(Start.record);
+        target(GetTempTriRealEstateContract.record);
+        transaction(none);
+        map(toField(General.RecordInformation.triIncludesIndexClauseBL, "FALSE"))
+    ]
+
+    /**
+     * @label Call Workflow OnChange Includes Index Clause
+     */
+    CallWorkflow (triContract, "triContract - Synchronous - OnChange Includes Index Clause")
+    [
+        mbo(triContract.triRealEstateContract);
+        records(Start.record)
+    ]
+}
+
+/**
+ * @label Get Fair Market Rate Value Clause
+ */
+Query GetFairMarketRateValueClause
+[
+    mbo(triItem.triLeaseClause);
+    query(triItem.triLeaseClause, "triLeaseClause - Workflow - Fair Market Rate Value Clause Associated to Lease");
+    contextRecords(Start.record)
+]
+
+If (GetFairMarketRateValueClause.ResultCount > 0 )  {
+
+    /**
+     * triIncludesFMRVClauseBL in system tab
+     * 
+     * @label Set triIncludesFMRVClauseBL to TRUE
+     */
+    ModifyRecords
+    [
+        mbo(triContract.triRealEstateContract);
+        formulaRecalc(disable);
+        source(Start.record);
+        target(GetTempTriRealEstateContract.record);
+        transaction(none);
+        map(toField(General.RecordInformation.triIncludesFMRVClauseBL, "TRUE"))
+    ]
+
+    /**
+     * @label Call Workflow onChange Includes FMRV Clause
+     */
+    CallWorkflow (triContract, "triContract - Synchronous - OnChange Includes FMRV Clause")
+    [
+        mbo(triContract.triRealEstateContract);
+        records(Start.record)
+    ]
+}
+Else  {
+
+    /**
+     * @label Set triIncludesFMRVClauseBLL to FALSE
+     */
+    ModifyRecords
+    [
+        mbo(triContract.triRealEstateContract);
+        formulaRecalc(disable);
+        source(Start.record);
+        target(GetTempTriRealEstateContract.record);
+        transaction(none);
+        map(toField(General.RecordInformation.triIncludesFMRVClauseBL, "FALSE"))
+    ]
+
+    /**
+     * @label Call Workflow onChange Includes FMRV Clause
+     */
+    CallWorkflow (triContract, "triContract - Synchronous - OnChange Includes FMRV Clause")
+    [
+        mbo(triContract.triRealEstateContract);
+        records(Start.record)
+    ]
+}
+
+/**
+ * @label For Recalculating Formula fields
+ */
+ModifyRecords
+[
+    mbo(triContract.triRealEstateContract);
+    formulaRecalc(asNeeded);
+    source(Start.record);
+    target(Start.record);
+    transaction(none);
+    map(toField(General.RecordInformation.GeographyName, General.RecordInformation.GeographyName));
+    map(toField(General.RecordInformation.triReportingNameTX, General.RecordInformation.triReportingNameTX));
+    map(toField(General.RecordInformation.triRentStraightLineNU, General.RecordInformation.triRentStraightLineNU));
+    map(toField(General.RecordInformation.triRentDeferredLiabilityNU, General.RecordInformation.triRentDeferredLiabilityNU));
+    map(toField(General.RecordInformation.triRentDeferredLiabilityCarryoverNU, General.RecordInformation.triRentDeferredLiabilityCarryoverNU));
+    map(toField(General.RecordInformation.triFasbCapitalorOpLeaseTX, General.RecordInformation.triFasbCapitalorOpLeaseTX));
+    map(toField(General.RecordInformation.triExpirationYearQuarterTX, General.RecordInformation.triExpirationYearQuarterTX));
+    map(toField(General.RecordInformation.triBusinessObjectLabelTX, General.RecordInformation.triBusinessObjectLabelTX))
+]
+
+/**
+ * Vaildate if there are Options need to be removed from association. 
+ * 
+ * @label Call Check Option Removed
+ */
+CallWorkflow (triContract.triRealEstateContract, "triRealEstateContract - Synchronous - Check Option Removed")
+[
+    mbo(triContract.triRealEstateContract);
+    records(Start.record)
+]
+
+/**
+ * @label Call triRealEstateContract - Reset RPIM and Federal Tab Settings
+ */
+CallWorkflow (triContract.triRealEstateContract, "triRealEstateContract - Synchronous - Reset RPIM and Federal Tab Settings")
+[
+    mbo(triContract.triRealEstateContract);
+    records(GetTempTriRealEstateContract.record)
+]
+
+If (GetTempTriRealEstateContract.record.RecordInformation.triUsingRPIMBL == "TRUE" )  {
+
+    /**
+     * @label Call triRealEstateContract - Update RPIM Tab Data
+     */
+    CallWorkflow (triContract.triRealEstateContract, "triRealEstateContract - Synchronous - Update RPIM Tab Data")
+    [
+        mbo(triContract.triRealEstateContract);
+        records(GetTempTriRealEstateContract.record)
+    ]
+}
+
+/**
+ * @label Set Lease Term
+ */
+CallWorkflow (triContract, "triContract - Synchronous - Update Lease Term")
+[
+    mbo(triContract.triRealEstateContract);
+    records(Start.record)
+]
+
+/**
+ * Hide/Show Incentive Schedule on Accounting Tab
+ * 
+ * @label Hide/Show Incentive Schedule
+ */
+CallWorkflow (triContract, "triContract - Synchronous - Hide/Show Incentive Schedule")
+[
+    mbo(triContract.triRealEstateContract);
+    records(GetTempTriRealEstateContract.record)
+]
+
+/**
+ * @label Call triContract - Synchronous - Update Business Unit
+ */
+CallWorkflow (triContract, "triContract - Synchronous - Update Business Unit")
+[
+    mbo(triContract.triRealEstateContract);
+    records(Start.record)
+]
+
+/**
+ * @label Call Disable Recalculate Schedules For Data Revise
+ */
+CallWorkflow (triContract, "cst-triContract - Subflow - Disable Recalculate Accounting Schedules For Data Revise")
+[
+    mbo(triContract.triRealEstateContract);
+    records(Start.record)
+]
+
+If (GetTempTriRealEstateContract.record.RecordInformation.cstHoldoverFlagNU == 1  )  {
+
+    /**
+     * @label Map Contract Status As Holdover
+     */
+    ModifyRecords
+    [
+        mbo(triContract.triRealEstateContract);
+        formulaRecalc(disable);
+        source(GetTempTriRealEstateContract.record);
+        target(GetTempTriRealEstateContract.record);
+        transaction(none);
+        map(toField(General.RecordInformation.cstContractStatusLI, "Holdover"))
+    ]
+}
+Else  {
+
+    If (GetTempTriRealEstateContract.record.RecordInformation.triStatusCL != "Active" && GetTempTriRealEstateContract.record.RecordInformation.triStatusCL != "Terminated"  )  {
+
+        /**
+         * @label Map Contract Status As Current
+         */
+        ModifyRecords
+        [
+            mbo(triContract.triRealEstateContract);
+            formulaRecalc(disable);
+            source(GetTempTriRealEstateContract.record);
+            target(GetTempTriRealEstateContract.record);
+            transaction(none);
+            map(toField(General.RecordInformation.cstContractStatusLI, "Current"))
+        ]
+    }
+}
+
+/**
+ * @label Make cstPropertyModificationDTO as read only
+ */
+ModifyForm
+[
+    mbo(triContract.triRealEstateContract);
+    form("Current");
+    target(GetTempTriRealEstateContract.record);
+    GUI(triRealEstateLease);
+    GUIMap(triGeneral.cstPropertyLocationName."Read Only", true)
+]
+
+If (GetTempTriRealEstateContract.record.RecordInformation.triChangeTypeLI == "Amendment"  )  {
+
+    /**
+     * @label Trigger cstHideActive
+     */
+    TriggerAction
+    [
+        mbo(triContract.triRealEstateContract);
+        formulaRecalc(disable);
+        action("cstHideActive");
+        target(Start.record);
+        triggerActionWhen(immediately)
+    ]
+}
+Else  {
+
+    If (GetTempTriRealEstateContract.record.RecordInformation.triChangeTypeLI == "Data Revise"  )  {
+
+        /**
+         * @label Trigger cstHideSubmitForAccountingReview
+         */
+        TriggerAction
+        [
+            mbo(triContract.triRealEstateContract);
+            formulaRecalc(disable);
+            action("cstHideSubmitForAccountingReview");
+            target(Start.record);
+            triggerActionWhen(immediately)
+        ]
+
+        /**
+         * @label Trigger cstHideGeneratePLIs
+         */
+        TriggerAction
+        [
+            mbo(triContract.triRealEstateContract);
+            formulaRecalc(disable);
+            action("cstHideGeneratePLIs");
+            target(GetTempTriRealEstateContract.record);
+            triggerActionWhen(immediately)
+        ]
+    }
+}
+
+End
